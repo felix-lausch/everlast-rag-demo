@@ -1,7 +1,5 @@
-import { getAllRecipes } from "@/lib/supabase/recipes";
-import RecipeBrowser from "@/components/RecipeBrowser";
+import Chat from "@/components/Chat";
 
-export default async function RecipesPage() {
-  const recipes = await getAllRecipes();
-  return <RecipeBrowser recipes={recipes} />;
+export default function Home() {
+  return <Chat />;
 }
