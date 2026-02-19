@@ -14,13 +14,11 @@ export default function RecipeTile({ recipe, onClick }: Props) {
       onClick={onClick ? (e) => { e.preventDefault(); onClick(recipe.id); } : undefined}
     >
       <div className="relative aspect-square overflow-hidden rounded-xl bg-zinc-800">
-        {recipe.photo_urls[0] && (
-          <img
-            src={recipe.photo_urls[0]}
-            alt={recipe.name}
-            className="absolute inset-0 h-full w-full object-cover"
+        <img
+          src={recipe.photo_urls[0] ?? "/file.svg"}
+          alt={recipe.name}
+          className={recipe.photo_urls[0] ? "absolute inset-0 h-full w-full object-cover" : "p-8"}
           />
-        )}
       </div>
       <p className="truncate text-xs font-medium leading-tight text-white">
         {recipe.name}
