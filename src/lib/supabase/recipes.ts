@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createBrowserClient } from "@/lib/supabase/client";
 import { embed } from "ai";
 import { openai } from "@ai-sdk/openai";
+import { QueryPlan } from "@/lib/query-planner";
 
 export interface RecipeMatch {
   id:                string;
@@ -98,3 +99,32 @@ export async function getAllRecipes(): Promise<RecipeTile[]> {
   return (data as RecipeTile[]) ?? [];
 }
 
+export async function searchRecipes(
+  plan: QueryPlan,
+  topK = 5
+): Promise<RecipeMatch[]> {
+  const embedding =
+    plan.semantic_query
+      ? (await embed({
+          model: openai.embedding("text-embedding-3-small"),
+          value: plan.semantic_query,
+        })).embedding
+      : null;
+
+  const supabase = createClient();
+  const { data, error } = await supabase.rpc("match_recipes", {
+    query_embedding:    embedding,
+    match_count:        topK,
+    filter_max_cal:     plan.filters.max_calories  ?? null,
+    filter_max_time:    plan.filters.max_prep_time ?? null,
+    filter_min_protein: plan.filters.min_protein   ?? null,
+    filter_favourite:   plan.filters.is_favourite  ?? null,
+  });
+
+  if (error) {
+    console.error("searchRecipes error:", error.message);
+    return [];
+  }
+
+  return (data as RecipeMatch[]) ?? [];
+}
