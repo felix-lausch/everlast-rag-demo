@@ -8,19 +8,19 @@ Ziel dieses Projekts ist ein hybrider RAG-Ansatz, der beide Welten kombiniert.
 
 Die Datenbasis bietet dabei meine eigene Sammlung an Rezepten aus der App "Recipe Keeper".
 
-## Architektur
+## Query Architektur
 
 ```
 User Query
-    │
-    ├─► SQL Filter (harte Constraints)
-    │     └─ Kalorien, Proteingehalt, Küche, Zubereitungszeit
-    │
-    ├─► pgvector Semantic Search (weiche Ähnlichkeit)
-    │     └─ Eingebettete Felder: Titel, Zutaten, Zubereitungsschritte
-    │
-    └─► LLM Reasoning Layer
-          └─ Strukturierter Output (JSON) auf Basis gefilterter + semantisch passender Rezepte
+  │
+  ├─► LLM Reasoning Layer: "Search Recipes" als verfügbarer Toolcall
+  │     └─ Falls ja -> User Query zu structured Query
+  │
+  ├─► SQL Filter (harte Constraints)
+  │     └─ Kalorien, Proteingehalt, Küche, Zubereitungszeit
+  │
+  └─► pgvector Semantic Search (weiche Ähnlichkeit)
+        └─ Eingebettete Felder: Titel, Zutaten, Zubereitungsschritte
 ```
 
 ## Integration: Einkaufsliste & Vorrat
@@ -40,12 +40,6 @@ Rezept ausgewählt
     │
     └─► LLM: Mengen konsolidieren, Synonyme auflösen
 ```
-
-## Design-Entscheidungen
-
-- **Hybrid statt rein vektoriell**: Embeddings allein sind unzuverlässig für numerische oder kategoriale Filter. SQL übernimmt harte Constraints, pgvector die semantische Ähnlichkeit.
-- **Server Components first**: Datenfetching findet wo möglich auf dem Server statt — kein unnötiges Client-State-Management.
-- **Strukturierter LLM-Output**: Das Modell gibt JSON zurück, das direkt weiterverarbeitet werden kann, statt Freitext zu parsen.
 
 ## Setup
 
