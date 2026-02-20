@@ -8,6 +8,8 @@ Ziel dieses Projekts ist ein hybrider RAG-Ansatz, der beide Welten kombiniert.
 
 Die Datenbasis bietet dabei meine eigene Sammlung an Rezepten aus der App "Recipe Keeper".
 
+You can find a (temporary) deployment [here](https://curious-liger-440bd7.netlify.app/)
+
 ## Query Architektur
 
 ```

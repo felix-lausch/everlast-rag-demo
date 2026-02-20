@@ -17,6 +17,13 @@ interface RecipeCardData {
 
 const STORAGE_KEY = "chat-messages";
 
+const SUGGESTIONS = [
+  { label: "🗓 Seasonal dishes", prompt: "What seasonal dishes can I make right now?" },
+  { label: "🥩 Chorizo leftovers", prompt: "I have chorizo left over — what can I cook with it?" },
+  { label: "🥦 Cook from my pantry", prompt: "What can I make from the ingredients in my pantry?" },
+  { label: "💪 High protein, under 600 kcal", prompt: "Show me recipes with high protein and less than 600 kcal" },
+];
+
 export default function Chat() {
   const { messages, sendMessage, setMessages, status } = useChat();
   const [input, setInput] = useState("");
@@ -41,6 +48,11 @@ export default function Chat() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  function handleSuggestionClick(prompt: string) {
+    if (isLoading) return;
+    sendMessage({ text: prompt });
+  }
+
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
@@ -55,9 +67,21 @@ export default function Chat() {
       <div className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto flex max-w-2xl flex-col gap-4">
           {messages.length === 0 && (
-            <p className="text-center text-sm text-zinc-500">
-              Send a message to start the conversation.
-            </p>
+            <div className="flex flex-col items-center gap-6 py-12">
+              <p className="text-sm text-zinc-500">How can I help you today?</p>
+              <div className="flex flex-wrap justify-center gap-2">
+                {SUGGESTIONS.map((s) => (
+                  <button
+                    key={s.label}
+                    onClick={() => handleSuggestionClick(s.prompt)}
+                    disabled={isLoading}
+                    className="rounded-full border border-zinc-700 bg-zinc-800 px-4 py-2 text-sm text-zinc-300 transition-colors hover:border-zinc-500 hover:bg-zinc-700 hover:text-zinc-100 disabled:opacity-50"
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
           {messages.map((m) => (
             <div
