@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AI Recipe Keeper
 
-## Getting Started
+## Das Problem
 
-First, run the development server:
+Rezeptsuche mit klassischen Schlagwortfiltern ist oft zu starr: Wer nach "etwas Leichtes mit Gemüse unter 30 Minuten" sucht, bekommt mit SQL allein keine sinnvollen Ergebnisse. Gleichzeitig liefern reine Embedding-Suchen keine zuverlässigen Filterergebnisse für harte Constraints wie Kalorien oder Zubereitungszeit.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+Ziel dieses Projekts ist ein hybrider RAG-Ansatz, der beide Welten kombiniert.
+
+Die Datenbasis bietet dabei meine eigene Sammlung an Rezepten aus der App "Recipe Keeper".
+
+## Architektur
+
+```
+User Query
+    │
+    ├─► SQL Filter (harte Constraints)
+    │     └─ Kalorien, Proteingehalt, Küche, Zubereitungszeit
+    │
+    ├─► pgvector Semantic Search (weiche Ähnlichkeit)
+    │     └─ Eingebettete Felder: Titel, Zutaten, Zubereitungsschritte
+    │
+    └─► LLM Reasoning Layer
+          └─ Strukturierter Output (JSON) auf Basis gefilterter + semantisch passender Rezepte
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Integration: Einkaufsliste & Vorrat
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Neben der Rezeptsuche ist ein zweites zentrales Feature die Verknüpfung von Rezepten mit dem persönlichen Vorrat und der Einkaufsliste:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Vorrat (Pantry)**: Der Nutzer pflegt, welche Zutaten er zuhause hat. Die Rezeptsuche kann darauf filtern und bevorzugt Rezepte vorschlagen, die größtenteils mit vorhandenen Zutaten auskommen.
+- **Einkaufsliste**: Fehlende Zutaten eines ausgewählten Rezepts werden automatisch auf die Einkaufsliste gesetzt — als Diff zwischen Rezeptzutaten und aktuellem Vorrat.
+- **LLM-gestützte Auflösung**: Das Modell gleicht unscharfe Bezeichnungen ab (z.B. "Zwiebel" vs. "rote Zwiebel") und fasst Mengenangaben zusammen.
 
-## Learn More
+```
+Rezept ausgewählt
+    │
+    ├─► Rezeptzutaten vs. Vorrat abgleichen (SQL)
+    │
+    ├─► Fehlende Zutaten → Einkaufsliste
+    │
+    └─► LLM: Mengen konsolidieren, Synonyme auflösen
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Design-Entscheidungen
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Hybrid statt rein vektoriell**: Embeddings allein sind unzuverlässig für numerische oder kategoriale Filter. SQL übernimmt harte Constraints, pgvector die semantische Ähnlichkeit.
+- **Server Components first**: Datenfetching findet wo möglich auf dem Server statt — kein unnötiges Client-State-Management.
+- **Strukturierter LLM-Output**: Das Modell gibt JSON zurück, das direkt weiterverarbeitet werden kann, statt Freitext zu parsen.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Setup
 
-## Deploy on Vercel
+### Voraussetzungen
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Node.js 18+
+- Supabase-Projekt mit aktivierter `pgvector`-Extension
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Umgebungsvariablen
+
+Kopiere `.env.example` nach `.env.local` und fülle die Werte aus:
+
+```
+NEXT_PUBLIC_SUPABASE_URL=...
+NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
+OPENAI_API_KEY=...
+```
+
+### Installation & Start
+
+```bash
+npm install
+npm run dev
+```
+
+Die App läuft unter [http://localhost:3000](http://localhost:3000).

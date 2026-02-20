@@ -1,0 +1,31 @@
+CREATE TABLE public.recipes (
+  id uuid NOT NULL,
+  name text NOT NULL,
+  is_favourite boolean NOT NULL DEFAULT false,
+  rating integer NOT NULL DEFAULT 0,
+  categories ARRAY NOT NULL DEFAULT '{}'::text[],
+  source text,
+  yield text,
+  prep_time_minutes integer,
+  cook_time_minutes integer,
+  ingredients ARRAY NOT NULL DEFAULT '{}'::text[],
+  directions ARRAY NOT NULL DEFAULT '{}'::text[],
+  notes text,
+  nut_calories numeric,
+  nut_total_fat numeric,
+  nut_saturated_fat numeric,
+  nut_sodium numeric,
+  nut_total_carb numeric,
+  nut_dietary_fiber numeric,
+  nut_sugars numeric,
+  nut_protein numeric,
+  nut_serving_size numeric,
+  photo_urls ARRAY NOT NULL DEFAULT '{}'::text[],
+  embedding USER-DEFINED,
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone NOT NULL DEFAULT now(),
+  courses ARRAY NOT NULL DEFAULT '{}'::text[],
+  CONSTRAINT recipes_pkey PRIMARY KEY (id)
+);
+
+CREATE INDEX recipes_embedding_hnsw ON public.recipes USING hnsw (embedding vector_cosine_ops) WITH (m='16', ef_construction='64')
